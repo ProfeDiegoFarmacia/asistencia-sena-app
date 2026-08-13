@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Asistencia SENA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #tab-informes, #tab-informes * { visibility: visible; }
+      #tab-informes { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-imprimir { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+  <nav class="bg-emerald-700 text-white shadow-lg p-4 sticky top-0 z-50 no-imprimir">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-graduation-cap text-2xl"></i>
+        <h1 class="text-xl font-bold tracking-wide">Control de Asistencia SENA</h1>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="cambiarTab('asistencia')" class="bg-emerald-800 hover:bg-emerald-900 px-3.5 py-2 rounded-lg font-medium transition text-sm">
+          <i class="fa-solid fa-clipboard-user mr-1.5"></i>Asistencia
+        </button>
+        <button id="btnTabInformes" onclick="cambiarTab('informes')" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg font-medium transition text-sm shadow">
+          <i class="fa-solid fa-chart-line mr-1.5"></i>Informes
+        </button>
+        <button onclick="abrirModalPINInstructor()" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-lg font-medium transition text-sm shadow">
+          <i class="fa-solid fa-user-shield mr-1.5"></i>Panel Instructor
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-4 md:p-6">
+
+    <!-- CONTROL INSTRUCTOR -->
+    <section id="panelInstructorBarra" class="hidden bg-slate-800 text-white p-5 rounded-2xl shadow-xl space-y-4 mb-6 border-2 border-amber-400 no-imprimir">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-700 pb-3 gap-2">
+        <div class="flex items-center space-x-3">
+          <span class="w-3 h-3 bg-emerald-400 rounded-full animate-ping"></span>
+          <h2 class="font-extrabold text-lg text-amber-400"><i class="fa-solid fa-lock-open mr-2"></i>Controles del Instructor Activos</h2>
+        </div>
+        <p class="text-xs text-slate-300">Modo Administrador Autorizado</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <button onclick="cambiarEstadoClaseServidor('ABIERTA')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl transition flex items-center justify-center text-sm shadow-md">
+          <i class="fa-solid fa-door-open mr-2 text-lg"></i>1. Habilitar Marcación
+        </button>
+        <button onclick="cambiarEstadoClaseServidor('CERRADA')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold p-3 rounded-xl transition flex items-center justify-center text-sm shadow-md">
+          <i class="fa-solid fa-door-closed mr-2 text-lg"></i>2. Cerrar Clase (Ausentes)
+        </button>
+        <button onclick="cambiarEstadoClaseServidor('TARDE_HABILITADA')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold p-3 rounded-xl transition flex items-center justify-center text-sm shadow-md">
+          <i class="fa-solid fa-clock-rotate-left mr-2 text-lg"></i>3. Permitir Registro Tarde
+        </button>
+      </div>
+    </section>
+
+    <!-- CREAR FICHA Y MÓDULO -->
+    <section id="tab-crearFicha" class="hidden space-y-6 no-imprimir">
+      <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 mb-4 gap-2">
+          <h2 id="tituloFormFicha" class="text-lg font-bold text-slate-700">
+            <i class="fa-solid fa-folder-plus text-emerald-600 mr-2"></i>Crear Ficha / Módulo
+          </h2>
+          <button onclick="limpiarFormularioFicha()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg transition whitespace-nowrap">
+            <i class="fa-solid fa-eraser mr-1"></i>Limpiar
+          </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Número de Ficha</label>
+            <input type="text" id="numFicha" placeholder="Ej: 2839102" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Programa</label>
+            <input type="text" id="progFicha" placeholder="Ej: Regencia de Farmacia" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Jornada</label>
+            <select id="jornadaFicha" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="Mañana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Módulo / Competencia</label>
+            <input type="text" id="modFicha" placeholder="Ej: Dispensación, Farmacovigilancia..." class="w-full border rounded-lg p-2.5 font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-slate-600 mb-1">Lista de Aprendices (Pegar desde Excel)</label>
+          <textarea id="pautaExcel" rows="8" placeholder="Pega los datos aquí..." class="w-full border rounded-lg p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <button onclick="procesarYGuardarFicha()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow transition flex items-center justify-center">
+          <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Guardar Ficha y Módulo
+        </button>
+      </div>
+    </section>
+
+    <!-- INFORMES Y MÉTRICAS -->
+    <section id="tab-informes" class="hidden space-y-6">
+      <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>Centro de Informes SENA</h2>
+            <p class="text-xs text-slate-500">Filtrado estricto por Ficha y Módulo</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-auto no-imprimir">
+            <select id="selectFichaInforme" onchange="cargarModulosInforme()" class="border rounded-lg p-2 text-xs font-bold text-blue-800 bg-blue-50 outline-none">
+              <option value="">-- 1. Ficha --</option>
+            </select>
+            <select id="selectModuloInforme" onchange="generarInformeFicha()" class="border rounded-lg p-2 text-xs font-bold text-blue-800 bg-blue-50 outline-none" disabled>
+              <option value="">-- 2. Módulo --</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="gridMetricasFicha" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-500 uppercase font-bold">Total Aprendices</p>
+            <p id="metricTotalAprendices" class="text-2xl font-black text-slate-800">0</p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-emerald-700 uppercase font-bold">En Regla</p>
+            <p id="metricEnRegla" class="text-2xl font-black text-emerald-600">0</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-amber-700 uppercase font-bold">Alerta (2 Fallas)</p>
+            <p id="metricAlerta" class="text-2xl font-black text-amber-600">0</p>
+          </div>
+          <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl text-center">
+            <p class="text-xs text-rose-700 uppercase font-bold">Deserción (3+ Fallas)</p>
+            <p id="metricDesercion" class="text-2xl font-black text-rose-600">0</p>
+          </div>
+        </div>
+
+        <div id="seccionConsultaIndividual" class="hidden bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+          <div class="flex justify-between items-center no-imprimir">
+            <h3 class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-user-check text-blue-600 mr-2"></i>Expediente de Aprendiz</h3>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition shadow">
+              <i class="fa-solid fa-print mr-1"></i>Imprimir Reporte
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center no-imprimir">
+            <div class="md:col-span-2">
+              <select id="selectAprendizInforme" onchange="mostrarDetalleAprendiz()" class="w-full border rounded-lg p-2.5 text-sm outline-none bg-white">
+                <option value="">-- Selecciona un aprendiz --</option>
+              </select>
+            </div>
+            <div id="badgeEstadoIndividual" class="text-center font-bold text-sm p-2 rounded-lg bg-white border">
+              Esperando selección...
+            </div>
+          </div>
+
+          <div id="bannerAlertaLegal" class="hidden p-4 bg-rose-100 border-2 border-rose-400 text-rose-800 rounded-xl space-y-1">
+            <div class="flex items-center space-x-2 font-extrabold text-sm">
+              <i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg"></i>
+              <span>REPORTE LEGAL: CAUSAL DIRECTA DE DESERCIÓN SENA</span>
+            </div>
+            <p class="text-xs">El aprendiz ha acumulado <strong>3 inasistencias injustificadas</strong> en este módulo. De acuerdo con el Reglamento del Aprendiz SENA, esta condición constituye motivo para inicio de trámite de cancelación de matrícula y citación a Comité de Evaluación.</p>
+          </div>
+
+          <div id="cajaDetalleAprendiz" class="hidden space-y-4 pt-2">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="bg-white p-3 rounded-lg border text-center">
+                <p class="text-[10px] text-slate-400 font-bold uppercase">Asistencias</p>
+                <p id="indAsistencias" class="text-xl font-bold text-emerald-600">0</p>
+              </div>
+              <div class="bg-white p-3 rounded-lg border text-center">
+                <p class="text-[10px] text-slate-400 font-bold uppercase">Llegadas Tarde</p>
+                <p id="indTardanzas" class="text-xl font-bold text-amber-600">0</p>
+              </div>
+              <div class="bg-white p-3 rounded-lg border text-center">
+                <p class="text-[10px] text-slate-400 font-bold uppercase">Justificadas</p>
+                <p id="indExcusas" class="text-xl font-bold text-blue-600">0</p>
+              </div>
+              <div class="bg-white p-3 rounded-lg border text-center">
+                <p class="text-[10px] text-slate-400 font-bold uppercase">Inasistencias</p>
+                <p id="indFallas" class="text-xl font-bold text-rose-600">0</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border space-y-2">
+              <h4 class="font-bold text-xs text-slate-700 uppercase border-b pb-2"><i class="fa-solid fa-clock-rotate-left text-amber-500 mr-2"></i>Novedades en este Módulo</h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left text-slate-600">
+                  <thead class="bg-slate-50 text-slate-700 font-bold border-b">
+                    <tr>
+                      <th class="p-2">Clase</th>
+                      <th class="p-2">Fecha</th>
+                      <th class="p-2 text-center">Novedad</th>
+                      <th class="p-2 text-center">Tiempo</th>
+                      <th class="p-2">Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyNovedadesAprendiz" class="divide-y">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="seccionMatrizTabla" class="hidden space-y-3">
+          <h3 class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-table-list text-blue-600 mr-2"></i>Tabla Consolidada del Módulo</h3>
+          <div class="overflow-x-auto border rounded-xl shadow-sm">
+            <table class="w-full text-xs text-left text-slate-600">
+              <thead class="text-xs uppercase bg-slate-100 text-slate-700 font-bold border-b">
+                <tr>
+                  <th class="p-3">Aprendiz</th>
+                  <th class="p-3">Documento</th>
+                  <th class="p-3 text-center">Presente</th>
+                  <th class="p-3 text-center">Tarde</th>
+                  <th class="p-3 text-center">Excusa</th>
+                  <th class="p-3 text-center">Fallas</th>
+                  <th class="p-3 text-center">Estado SENA</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyMatrizConsolidada" class="divide-y">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TOMA DE ASISTENCIA -->
+    <section id="tab-asistencia" class="space-y-6 no-imprimir">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 space-y-4">
+            <div>
+              <h3 class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-users-rectangle text-emerald-600 mr-2"></i>1. Seleccionar Ficha</h3>
+              <select id="selectFichaActiva" onchange="cargarModulosAsistencia()" class="w-full border rounded-lg p-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="">-- Elige una Ficha --</option>
+              </select>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-book text-emerald-600 mr-2"></i>2. Seleccionar Módulo</h3>
+              <select id="selectModuloActivo" onchange="verificarEstadoClaseYAprendices()" class="w-full border rounded-lg p-2.5 text-sm font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500" disabled>
+                <option value="">-- Primero elige Ficha --</option>
+              </select>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-calendar-check text-emerald-600 mr-2"></i>3. Sesión / Clase Actual</h3>
+              <select id="selectNumeroClase" onchange="verificarEstadoClaseYAprendices()" class="w-full border rounded-lg p-2.5 font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500">
+              </select>
+            </div>
+
+            <div id="cajaEstadoClase" class="p-3 bg-slate-100 border rounded-xl text-center font-bold text-xs">
+              Seleccione Ficha, Módulo y Clase.
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 text-center">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
+              <i class="fa-solid fa-dice text-2xl"></i>
+            </div>
+            <h3 class="font-bold text-slate-700 mb-1">Participación Aleatoria</h3>
+            <div id="cuadroRuleta" class="min-h-[50px] bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-3 flex items-center justify-center my-3">
+              <span id="nombrePreguntado" class="font-bold text-slate-700">¿Quién responderá?</span>
+            </div>
+            <button onclick="lanzarPreguntaAleatoria()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg shadow transition">
+              <i class="fa-solid fa-shuffle mr-2"></i>Elegir Aprendiz
+            </button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-slate-200 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 gap-2">
+            <div>
+              <h3 class="font-bold text-slate-700"><i class="fa-solid fa-list-check text-emerald-600 mr-2"></i>Lista de Aprendices</h3>
+              <p class="text-xs text-slate-500">Regla SENA: 3 Inasistencias Injustificadas = Deserción</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span id="contadorAprendices" class="text-xs bg-slate-100 border px-3 py-1.5 rounded-full font-semibold text-slate-600">0 Registrados</span>
+              <button id="btnAgregarAprendizNuevo" onclick="abrirModalAprendizNuevo()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition shadow">
+                <i class="fa-solid fa-user-plus mr-1"></i>+ Agregar Aprendiz
+              </button>
+            </div>
+          </div>
+
+          <div class="flex gap-2 mb-2">
+            <input type="text" id="buscadorAprendiz" onkeyup="filtrarLista()" placeholder="🔍 Buscar por nombre o número de documento..." class="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+
+          <div id="contenedorLista" class="space-y-3 max-h-[550px] overflow-y-auto pr-2">
+            <p class="text-slate-400 text-center py-8">Selecciona una ficha y módulo para tomar asistencia.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: AGREGAR / EDITAR APRENDIZ INDIVIDUAL -->
+  <div id="modalAprendizIndividual" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-imprimir">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3 text-emerald-600 border-b pb-3">
+        <i class="fa-solid fa-user-pen text-2xl"></i>
+        <h3 id="tituloModalAprendiz" class="font-bold text-lg text-slate-800">Agregar Nuevo Aprendiz</h3>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tipo Doc</label>
+            <select id="indTipoDoc" class="w-full border rounded-lg p-2 outline-none">
+              <option value="CC">CC</option>
+              <option value="TI">TI</option>
+              <option value="CE">CE</option>
+              <option value="PEP">PEP</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Número de Documento</label>
+            <input type="text" id="indNumDoc" placeholder="Ej: 1017283920" class="w-full border rounded-lg p-2 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nombres</label>
+          <input type="text" id="indNombre" placeholder="Nombres del aprendiz..." class="w-full border rounded-lg p-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Apellidos</label>
+          <input type="text" id="indApellidos" placeholder="Apellidos del aprendiz..." class="w-full border rounded-lg p-2 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Celular</label>
+            <input type="text" id="indCelular" placeholder="3001234567" class="w-full border rounded-lg p-2 outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Correo</label>
+            <input type="email" id="indCorreo" placeholder="correo@sena.edu.co" class="w-full border rounded-lg p-2 outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="cerrarModal('modalAprendizIndividual')" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-lg text-xs transition">Cancelar</button>
+        <button onclick="guardarAprendizIndividual()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs transition">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PIN INSTRUCTOR -->
+  <div id="modalPINInstructor" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-imprimir">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+        <i class="fa-solid fa-key text-2xl"></i>
+      </div>
+      <h3 class="font-bold text-lg text-slate-800">Acceso Instructor</h3>
+      <p class="text-xs text-slate-500">Ingresa tu clave de acceso autorizada</p>
+      <input type="password" id="inputPIN" maxlength="6" placeholder="******" class="w-full text-center text-2xl tracking-widest font-bold border rounded-lg p-2 outline-none focus:ring-2 focus:ring-amber-500">
+      <div class="flex space-x-2 pt-2">
+        <button onclick="cerrarModal('modalPINInstructor')" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-lg text-xs transition">Cancelar</button>
+        <button onclick="verificarPIN()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-xs transition">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EXCUSA -->
+  <div id="modalExcusa" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-imprimir">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border-t-4 border-blue-600">
+      <div class="flex items-center space-x-3 text-blue-600 border-b pb-3">
+        <i class="fa-solid fa-file-signature text-2xl"></i>
+        <h3 class="font-bold text-lg text-slate-800">Inasistencia Justificada</h3>
+      </div>
+      <p id="infoNombreExcusa" class="font-bold text-slate-800 text-sm"></p>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Detalle / Motivo de la Excusa:</label>
+        <textarea id="motivoExcusa" rows="3" placeholder="Ej: Incapacidad Médica EPS Sura #38291..." class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="cerrarModal('modalExcusa')" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-lg text-sm transition">Cancelar</button>
+        <button onclick="confirmarExcusa()" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">Guardar Excusa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TARDE -->
+  <div id="modalTarde" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-imprimir">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3 text-amber-600 border-b pb-3">
+        <i class="fa-solid fa-clock text-2xl"></i>
+        <h3 class="font-bold text-lg text-slate-800">Registro de Llegada Tarde</h3>
+      </div>
+      <div id="infoHistorialTarde" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-1"></div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Motivo / Razón del Retraso:</label>
+        <textarea id="motivoTarde" rows="3" placeholder="Describe brevemente por qué llegó tarde..." class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="cerrarModal('modalTarde')" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-lg text-xs transition">Cancelar</button>
+        <button onclick="confirmarTarde()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg text-xs transition">Guardar Tarde</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TESTIGO -->
+  <div id="modalTestigo" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-imprimir">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+        <i class="fa-solid fa-user-check text-2xl"></i>
+      </div>
+      <h3 class="font-bold text-lg text-slate-800">Confirmación de Presencia</h3>
+      <p class="text-xs text-slate-500">Verificación para la <strong id="modalTextoClase" class="text-emerald-700">Clase</strong></p>
+      <div class="bg-slate-50 border p-3 rounded-lg">
+        <p class="text-xs text-slate-500 mb-1">¿Ves en el salón a?</p>
+        <p id="modalNombreTestigo" class="font-bold text-slate-800 text-base"></p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="responderTestigo('Sí, presente')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+          <i class="fa-solid fa-check mr-1"></i>Sí está
+        </button>
+        <button onclick="responderTestigo('No lo veo')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-lg text-sm transition">
+          <i class="fa-solid fa-xmark mr-1"></i>No lo veo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URL Backend Apps Script v2.0
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzdWdjtV-Ul248oGHOwUZRdBxKPSnWcygae4T9NxikDVw1-mrV0ufz2OppfkHcbwL15/exec";
+    
+    // PIN de Instructor
+    const PIN_INSTRUCTOR = "320811";
+    
+    let fichasGuardadas = {};
+    let estadoClases = {};
+    let historialCompleto = [];
+    let datosPendientes = null;
+    let esInstructorAutenticado = false;
+    let docAprendizEdicion = null;
+
+    window.onload = function() {
+      poblarSelectorClases();
+      obtenerFichasServidor();
+    };
+
+    function poblarSelectorClases() {
+      const select = document.getElementById('selectNumeroClase');
+      select.innerHTML = "";
+      for (let i = 1; i <= 32; i++) {
+        select.innerHTML += `<option value="${i}">Clase #${i}</option>`;
+      }
+    }
+
+    function cambiarTab(tab) {
+      document.getElementById('tab-asistencia').classList.add('hidden');
+      document.getElementById('tab-crearFicha').classList.add('hidden');
+      document.getElementById('tab-informes').classList.add('hidden');
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    function abrirModalPINInstructor() {
+      if (esInstructorAutenticado) {
+        document.getElementById('panelInstructorBarra').classList.toggle('hidden');
+        document.getElementById('tab-crearFicha').classList.toggle('hidden');
+      } else {
+        document.getElementById('inputPIN').value = "";
+        document.getElementById('modalPINInstructor').classList.remove('hidden');
+      }
+    }
+
+    function verificarPIN() {
+      const pin = document.getElementById('inputPIN').value;
+      if (pin === PIN_INSTRUCTOR) {
+        esInstructorAutenticado = true;
+        cerrarModal('modalPINInstructor');
+        document.getElementById('panelInstructorBarra').classList.remove('hidden');
+        document.getElementById('btnTabInformes').classList.remove('hidden');
+        document.getElementById('btnAgregarAprendizNuevo').classList.remove('hidden');
+        verificarEstadoClaseYAprendices();
+        alert("¡Acceso como Instructor Concedido!");
+      } else {
+        alert("PIN Incorrecto.");
+      }
+    }
+
+    function obtenerFichasServidor() {
+      fetch(URL_SCRIPT)
+        .then(res => res.json())
+        .then(data => {
+          fichasGuardadas = data.fichas || {};
+          estadoClases = data.estadoClases || {};
+          historialCompleto = data.historialCompleto || [];
+          actualizarSelectFichas();
+          actualizarSelectInformesFichas();
+          verificarEstadoClaseYAprendices();
+        });
+    }
+
+    function actualizarSelectFichas() {
+      const select = document.getElementById('selectFichaActiva');
+      select.innerHTML = '<option value="">-- Elige una Ficha --</option>';
+      Object.keys(fichasGuardadas).forEach(f => {
+        select.innerHTML += `<option value="${f}">Ficha ${f} (${fichasGuardadas[f].programa})</option>`;
+      });
+    }
+
+    function cargarModulosAsistencia() {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const selectMod = document.getElementById('selectModuloActivo');
+      selectMod.innerHTML = '<option value="">-- Selecciona Módulo --</option>';
+
+      if (!numFicha || !fichasGuardadas[numFicha]) {
+        selectMod.disabled = true;
+        verificarEstadoClaseYAprendices();
+        return;
+      }
+
+      const mods = Object.keys(fichasGuardadas[numFicha].modulos);
+      mods.forEach(m => {
+        selectMod.innerHTML += `<option value="${m}">${m}</option>`;
+      });
+      selectMod.disabled = false;
+      verificarEstadoClaseYAprendices();
+    }
+
+    function cargarAprendicesFicha(permitirRegistro, modoClase, horaAperturaStr) {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+      const cont = document.getElementById('contenedorLista');
+      cont.innerHTML = "";
+
+      if (!numFicha || !modulo || !fichasGuardadas[numFicha] || !fichasGuardadas[numFicha].modulos[modulo]) {
+        cont.innerHTML = '<p class="text-slate-400 text-center py-8">Selecciona una ficha y módulo.</p>';
+        return;
+      }
+
+      const lista = fichasGuardadas[numFicha].modulos[modulo];
+      document.getElementById('contadorAprendices').innerText = `${lista.length} Aprendices`;
+
+      lista.forEach(ap => {
+        const fallas = ap.fallas || 0;
+        const tardanzas = ap.tardanzas || 0;
+        const excusas = ap.excusas || 0;
+
+        let badgeSemaforo = '<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">En Regla</span>';
+        if (fallas === 2) {
+          badgeSemaforo = '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">⚠️ ALERTA DESERCIÓN</span>';
+        } else if (fallas >= 3) {
+          badgeSemaforo = '<span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-300">🚨 DESERCIÓN (3+ Fallas)</span>';
+        }
+
+        let botonesHTML = '';
+        if (permitirRegistro && modoClase === "ABIERTA") {
+          botonesHTML = `
+            <button onclick="iniciarMarcacion('${numFicha}', '${modulo}', '${ap.numDoc}', '${ap.nombre} ${ap.apellidos}', 'Presente', this, '${horaAperturaStr}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition">
+              <i class="fa-solid fa-check mr-1"></i>Presente
+            </button>
+            <button onclick="abrirModalTarde('${numFicha}', '${modulo}', '${ap.numDoc}', '${ap.nombre} ${ap.apellidos}', ${tardanzas}, this, '${horaAperturaStr}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition">
+              <i class="fa-solid fa-clock mr-1"></i>Tarde
+            </button>
+          `;
+        } else if (permitirRegistro && modoClase === "TARDE_HABILITADA") {
+          botonesHTML = `
+            <button onclick="abrirModalTarde('${numFicha}', '${modulo}', '${ap.numDoc}', '${ap.nombre} ${ap.apellidos}', ${tardanzas}, this, '${horaAperturaStr}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition">
+              <i class="fa-solid fa-clock mr-1"></i>Marcar Tarde
+            </button>
+          `;
+        } else {
+          botonesHTML = `<span class="text-xs font-bold text-slate-400 bg-slate-200 px-3 py-1.5 rounded-lg">Bloqueado</span>`;
+        }
+
+        let botonesGestionHTML = '';
+        if (esInstructorAutenticado) {
+          botonesGestionHTML = `
+            <button onclick="abrirModalExcusa('${numFicha}', '${modulo}', '${ap.numDoc}', '${ap.nombre} ${ap.apellidos}', this)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition shadow" title="Registrar Excusa">
+              <i class="fa-solid fa-file-signature"></i>
+            </button>
+            <button onclick="abrirModalEditarAprendiz('${ap.tipoDoc}', '${ap.numDoc}', '${ap.nombre}', '${ap.apellidos}', '${ap.celular}', '${ap.correo}')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition shadow" title="Editar Aprendiz">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="eliminarAprendizIndividual('${ap.numDoc}', '${ap.nombre} ${ap.apellidos}')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition shadow" title="Eliminar Aprendiz">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          `;
+        }
+
+        cont.innerHTML += `
+          <div class="item-aprendiz flex flex-col md:flex-row md:items-center justify-between p-3.5 bg-slate-50 border rounded-xl hover:bg-slate-100 transition gap-3" data-nombre="${ap.nombre.toLowerCase()} ${ap.apellidos.toLowerCase()}" data-doc="${ap.numDoc}">
+            <div>
+              <div class="flex items-center space-x-2">
+                <p class="font-bold text-slate-800">${ap.nombre} ${ap.apellidos}</p>
+                ${badgeSemaforo}
+              </div>
+              <p class="text-xs text-slate-500">${ap.tipoDoc}: ${ap.numDoc} | Inasistencias: <strong class="text-rose-600">${fallas}</strong> | Tardanzas: <strong class="text-amber-600">${tardanzas}</strong> | Justificadas: <strong class="text-blue-600">${excusas}</strong></p>
+            </div>
+            <div class="flex flex-wrap space-x-1.5 space-y-1 sm:space-y-0">
+              ${botonesHTML}
+              ${botonesGestionHTML}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function abrirModalAprendizNuevo() {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+      if (!numFicha || !modulo) return alert("Selecciona primero una Ficha y Módulo.");
+
+      docAprendizEdicion = null;
+      document.getElementById('tituloModalAprendiz').innerText = "Agregar Nuevo Aprendiz";
+      document.getElementById('indTipoDoc').value = "CC";
+      document.getElementById('indNumDoc').value = "";
+      document.getElementById('indNumDoc').disabled = false;
+      document.getElementById('indNombre').value = "";
+      document.getElementById('indApellidos').value = "";
+      document.getElementById('indCelular').value = "";
+      document.getElementById('indCorreo').value = "";
+      document.getElementById('modalAprendizIndividual').classList.remove('hidden');
+    }
+
+    function abrirModalEditarAprendiz(tipoDoc, numDoc, nombre, apellidos, celular, correo) {
+      docAprendizEdicion = numDoc;
+      document.getElementById('tituloModalAprendiz').innerText = "Editar Datos del Aprendiz";
+      document.getElementById('indTipoDoc').value = tipoDoc || "CC";
+      document.getElementById('indNumDoc').value = numDoc;
+      document.getElementById('indNumDoc').disabled = true;
+      document.getElementById('indNombre').value = nombre;
+      document.getElementById('indApellidos').value = apellidos;
+      document.getElementById('indCelular').value = celular || "";
+      document.getElementById('indCorreo').value = correo || "";
+      document.getElementById('modalAprendizIndividual').classList.remove('hidden');
+    }
+
+    function guardarAprendizIndividual() {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+      const tipoDoc = document.getElementById('indTipoDoc').value;
+      const numDoc = document.getElementById('indNumDoc').value.trim();
+      const nombre = document.getElementById('indNombre').value.trim();
+      const apellidos = document.getElementById('indApellidos').value.trim();
+      const celular = document.getElementById('indCelular').value.trim();
+      const correo = document.getElementById('indCorreo').value.trim();
+
+      if (!numDoc || !nombre || !apellidos) return alert("Ingresa al menos Documento, Nombres y Apellidos.");
+
+      const accion = docAprendizEdicion ? "editarAprendiz" : "agregarAprendiz";
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        body: JSON.stringify({
+          accion: accion,
+          ficha: numFicha,
+          modulo: modulo,
+          docOriginal: docAprendizEdicion,
+          tipoDoc: tipoDoc,
+          numDoc: numDoc,
+          nombre: nombre,
+          apellidos: apellidos,
+          celular: celular,
+          correo: correo
+        })
+      })
+      .then(() => {
+        alert(docAprendizEdicion ? "¡Aprendiz editado!" : "¡Aprendiz agregado!");
+        cerrarModal('modalAprendizIndividual');
+        obtenerFichasServidor();
+      });
+    }
+
+    function eliminarAprendizIndividual(numDoc, nombreCompleto) {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+
+      if (!confirm(`¿Seguro que deseas eliminar a ${nombreCompleto} de la ficha ${numFicha} - ${modulo}?`)) return;
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        body: JSON.stringify({
+          accion: 'eliminarAprendiz',
+          ficha: numFicha,
+          modulo: modulo,
+          numDoc: numDoc
+        })
+      })
+      .then(() => {
+        alert("Aprendiz eliminado.");
+        obtenerFichasServidor();
+      });
+    }
+
+    function actualizarSelectInformesFichas() {
+      const select = document.getElementById('selectFichaInforme');
+      select.innerHTML = '<option value="">-- 1. Ficha --</option>';
+      Object.keys(fichasGuardadas).forEach(f => {
+        select.innerHTML += `<option value="${f}">Ficha ${f}</option>`;
+      });
+    }
+
+    function cargarModulosInforme() {
+      const numFicha = document.getElementById('selectFichaInforme').value;
+      const selectMod = document.getElementById('selectModuloInforme');
+      selectMod.innerHTML = '<option value="">-- 2. Módulo --</option>';
+
+      if (!numFicha || !fichasGuardadas[numFicha]) {
+        selectMod.disabled = true;
+        generarInformeFicha();
+        return;
+      }
+
+      const mods = Object.keys(fichasGuardadas[numFicha].modulos);
+      mods.forEach(m => {
+        selectMod.innerHTML += `<option value="${m}">${m}</option>`;
+      });
+      selectMod.disabled = false;
+      generarInformeFicha();
+    }
+
+    function generarInformeFicha() {
+      const numFicha = document.getElementById('selectFichaInforme').value;
+      const modulo = document.getElementById('selectModuloInforme').value;
+      const grid = document.getElementById('gridMetricasFicha');
+      const secInd = document.getElementById('seccionConsultaIndividual');
+      const secMatriz = document.getElementById('seccionMatrizTabla');
+
+      if (!numFicha || !modulo || !fichasGuardadas[numFicha] || !fichasGuardadas[numFicha].modulos[modulo]) {
+        grid.classList.add('hidden');
+        secInd.classList.add('hidden');
+        secMatriz.classList.add('hidden');
+        return;
+      }
+
+      const aprendices = fichasGuardadas[numFicha].modulos[modulo];
+      let enRegla = 0, alerta = 0, desercion = 0;
+
+      const selectAp = document.getElementById('selectAprendizInforme');
+      selectAp.innerHTML = '<option value="">-- Selecciona un aprendiz --</option>';
+
+      const tbody = document.getElementById('tbodyMatrizConsolidada');
+      tbody.innerHTML = "";
+
+      aprendices.forEach(ap => {
+        const fallas = ap.fallas || 0;
+        if (fallas <= 1) enRegla++;
+        else if (fallas === 2) alerta++;
+        else desercion++;
+
+        selectAp.innerHTML += `<option value="${ap.numDoc}">${ap.nombre} ${ap.apellidos} (${ap.numDoc})</option>`;
+
+        let badgeSena = '<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">En Regla</span>';
+        if (fallas === 2) badgeSena = '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">⚠️ Alerta</span>';
+        else if (fallas >= 3) badgeSena = '<span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full">🚨 Deserción</span>';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3 font-bold text-slate-800">${ap.nombre} ${ap.apellidos}</td>
+            <td class="p-3 text-slate-500">${ap.numDoc}</td>
+            <td class="p-3 text-center font-bold text-emerald-600">${ap.asistencias || 0}</td>
+            <td class="p-3 text-center font-bold text-amber-600">${ap.tardanzas || 0}</td>
+            <td class="p-3 text-center font-bold text-blue-600">${ap.excusas || 0}</td>
+            <td class="p-3 text-center font-bold text-rose-600">${fallas}</td>
+            <td class="p-3 text-center">${badgeSena}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('metricTotalAprendices').innerText = aprendices.length;
+      document.getElementById('metricEnRegla').innerText = enRegla;
+      document.getElementById('metricAlerta').innerText = alerta;
+      document.getElementById('metricDesercion').innerText = desercion;
+
+      grid.classList.remove('hidden');
+      secInd.classList.remove('hidden');
+      secMatriz.classList.remove('hidden');
+    }
+
+    function mostrarDetalleAprendiz() {
+      const doc = document.getElementById('selectAprendizInforme').value;
+      const numFicha = document.getElementById('selectFichaInforme').value;
+      const modulo = document.getElementById('selectModuloInforme').value;
+      const cajaDetalle = document.getElementById('cajaDetalleAprendiz');
+      const badge = document.getElementById('badgeEstadoIndividual');
+      const bannerLegal = document.getElementById('bannerAlertaLegal');
+
+      if (!doc || !numFicha || !modulo) {
+        cajaDetalle.classList.add('hidden');
+        bannerLegal.classList.add('hidden');
+        badge.innerText = "Esperando selección...";
+        badge.className = "text-center font-bold text-sm p-2 rounded-lg bg-white border";
+        return;
+      }
+
+      const ap = fichasGuardadas[numFicha].modulos[modulo].find(a => String(a.numDoc) === String(doc));
+      if (!ap) return;
+
+      document.getElementById('indAsistencias').innerText = ap.asistencias || 0;
+      document.getElementById('indTardanzas').innerText = ap.tardanzas || 0;
+      document.getElementById('indExcusas').innerText = ap.excusas || 0;
+      document.getElementById('indFallas').innerText = ap.fallas || 0;
+
+      const fallas = ap.fallas || 0;
+      if (fallas <= 1) {
+        badge.innerText = "ESTADO: EN REGLA";
+        badge.className = "text-center font-bold text-xs p-2.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300";
+        bannerLegal.classList.add('hidden');
+      } else if (fallas === 2) {
+        badge.innerText = "ESTADO: ⚠️ ALERTA DE DESERCIÓN";
+        badge.className = "text-center font-bold text-xs p-2.5 rounded-lg bg-amber-100 text-amber-800 border border-amber-300";
+        bannerLegal.classList.add('hidden');
+      } else {
+        badge.innerText = "ESTADO: 🚨 CAUSAL DE DESERCIÓN";
+        badge.className = "text-center font-bold text-xs p-2.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300";
+        bannerLegal.classList.remove('hidden');
+      }
+
+      const novedades = historialCompleto.filter(h => String(h.numDoc) === String(doc) && String(h.ficha) === String(numFicha) && String(h.modulo) === String(modulo) && h.estado !== "Presente");
+      const tbodyNov = document.getElementById('tbodyNovedadesAprendiz');
+      tbodyNov.innerHTML = "";
+
+      if (novedades.length === 0) {
+        tbodyNov.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">El aprendiz no registra novedades en este módulo.</td></tr>`;
+      } else {
+        novedades.forEach(n => {
+          let badgeEstado = '';
+          if (n.estado === "Inasistencia") badgeEstado = '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">Falla Injustificada</span>';
+          else if (n.estado === "Llegada Tarde") badgeEstado = '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Llegada Tarde</span>';
+          else if (n.estado === "Inasistencia Justificada") badgeEstado = '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">Excusa Médica / Permiso</span>';
+
+          tbodyNov.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-2 font-bold text-slate-800">${n.clase}</td>
+              <td class="p-2 text-slate-500">${new Date(n.fecha).toLocaleString()}</td>
+              <td class="p-2 text-center">${badgeEstado}</td>
+              <td class="p-2 text-center text-slate-500 font-mono">${n.tiempoRegistro}</td>
+              <td class="p-2 text-slate-700 italic">${n.observacion || 'Sin observación'}</td>
+            </tr>
+          `;
+        });
+      }
+
+      cajaDetalle.classList.remove('hidden');
+    }
+
+    function cambiarEstadoClaseServidor(nuevoEstado) {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+      const numClase = document.getElementById('selectNumeroClase').value;
+      
+      if (!numFicha || !modulo) return alert("Selecciona una Ficha y Módulo primero.");
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        body: JSON.stringify({
+          accion: 'cambiarEstadoClase',
+          ficha: numFicha,
+          modulo: modulo,
+          numeroClase: numClase,
+          nuevoEstado: nuevoEstado,
+          horaApertura: new Date().toISOString()
+        })
+      })
+      .then(() => {
+        alert(`Clase #${numClase} declarada como: ${nuevoEstado}`);
+        obtenerFichasServidor();
+      });
+    }
+
+    function verificarEstadoClaseYAprendices() {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+      const numClase = document.getElementById('selectNumeroClase').value;
+      const caja = document.getElementById('cajaEstadoClase');
+
+      if (!numFicha || !modulo) {
+        caja.innerHTML = "Seleccione Ficha y Módulo.";
+        caja.className = "p-3 bg-slate-100 border rounded-xl text-center font-bold text-xs text-slate-500";
+        cargarAprendicesFicha(false, "SELECCIONAR");
+        return;
+      }
+
+      const clave = numFicha + "_" + modulo + "_" + numClase;
+      const infoClase = estadoClases[clave];
+
+      if (!infoClase || infoClase.estado === "CERRADA") {
+        caja.innerHTML = "🔴 CLASE CERRADA O NO HABILITADA POR EL INSTRUCTOR";
+        caja.className = "p-3 bg-rose-100 border border-rose-300 rounded-xl text-center font-bold text-xs text-rose-700";
+        cargarAprendicesFicha(false, "CERRADA", infoClase?.horaApertura);
+      } else if (infoClase.estado === "ABIERTA") {
+        caja.innerHTML = "🟢 CLASE ABIERTA - REGISTRO EN CURSO";
+        caja.className = "p-3 bg-emerald-100 border border-emerald-300 rounded-xl text-center font-bold text-xs text-emerald-800 animate-pulse";
+        cargarAprendicesFicha(true, "ABIERTA", infoClase.horaApertura);
+      } else if (infoClase.estado === "TARDE_HABILITADA") {
+        caja.innerHTML = "🟡 REGISTRO EXTEMPORÁNEO HABILITADO (SOLO TARDE)";
+        caja.className = "p-3 bg-amber-100 border border-amber-300 rounded-xl text-center font-bold text-xs text-amber-800";
+        cargarAprendicesFicha(true, "TARDE_HABILITADA", infoClase.horaApertura);
+      }
+    }
+
+    function abrirModalExcusa(ficha, modulo, numDoc, nombreCompleto, btn) {
+      const numClase = document.getElementById('selectNumeroClase').value;
+      datosPendientes = { ficha, modulo, numDoc, nombreCompleto, estado: 'Inasistencia Justificada', numClase, btn };
+      document.getElementById('infoNombreExcusa').innerText = `Aprendiz: ${nombreCompleto}`;
+      document.getElementById('motivoExcusa').value = "";
+      document.getElementById('modalExcusa').classList.remove('hidden');
+    }
+
+    function confirmarExcusa() {
+      const motivo = document.getElementById('motivoExcusa').value.trim();
+      if (!motivo) return alert("Por favor ingresa la observación de la excusa.");
+      datosPendientes.motivo = motivo;
+      cerrarModal('modalExcusa');
+      enviarMarcacion('Verificado por Instructor', motivo);
+    }
+
+    function calcularTiempoRespuesta(horaAperturaStr) {
+      if (!horaAperturaStr) return "N/A";
+      const apertura = new Date(horaAperturaStr);
+      const ahora = new Date();
+      const diffSegundos = Math.floor((ahora - apertura) / 1000);
+      const minutos = Math.floor(diffSegundos / 60);
+      const segundos = diffSegundos % 60;
+      return `${minutos} min ${segundos} seg`;
+    }
+
+    function iniciarMarcacion(ficha, modulo, numDoc, nombreCompleto, estado, btn, horaAperturaStr) {
+      const numClase = document.getElementById('selectNumeroClase').value;
+      const tiempoRespuesta = calcularTiempoRespuesta(horaAperturaStr);
+      const lista = fichasGuardadas[ficha].modulos[modulo];
+      const otros = lista.filter(ap => ap.numDoc !== numDoc);
+      const testigo = otros.length > 0 ? otros[Math.floor(Math.random() * otros.length)] : null;
+
+      datosPendientes = { ficha, modulo, numDoc, nombreCompleto, estado, numClase, btn, tiempoRespuesta, testigo: testigo ? `${testigo.nombre} ${testigo.apellidos}` : 'N/A' };
+
+      if (testigo) {
+        document.getElementById('modalTextoClase').innerText = `Clase #${numClase}`;
+        document.getElementById('modalNombreTestigo').innerText = datosPendientes.testigo;
+        document.getElementById('modalTestigo').classList.remove('hidden');
+      } else {
+        enviarMarcacion('N/A', 'Registro Asistencia');
+      }
+    }
+
+    function abrirModalTarde(ficha, modulo, numDoc, nombreCompleto, tardanzasAnteriores, btn, horaAperturaStr) {
+      const numClase = document.getElementById('selectNumeroClase').value;
+      const tiempoRespuesta = calcularTiempoRespuesta(horaAperturaStr);
+      datosPendientes = { ficha, modulo, numDoc, nombreCompleto, estado: 'Llegada Tarde', numClase, btn, tiempoRespuesta };
+      
+      const nuevaCuenta = tardanzasAnteriores + 1;
+      document.getElementById('infoHistorialTarde').innerHTML = `
+        <p class="font-bold text-slate-800">${nombreCompleto}</p>
+        <p class="text-slate-600">Llegada tarde #${nuevaCuenta}. Tiempo transcurrido: <strong>${tiempoRespuesta}</strong></p>
+      `;
+      document.getElementById('motivoTarde').value = "";
+      document.getElementById('modalTarde').classList.remove('hidden');
+    }
+
+    function confirmarTarde() {
+      const motivo = document.getElementById('motivoTarde').value.trim();
+      if (!motivo) return alert("Por favor ingresa la razón de la llegada tarde.");
+      datosPendientes.motivo = motivo;
+      cerrarModal('modalTarde');
+      enviarMarcacion('Verificado Tarde', motivo);
+    }
+
+    function responderTestigo(respuesta) {
+      document.getElementById('modalTestigo').classList.add('hidden');
+      enviarMarcacion(respuesta, 'Registro Asistencia');
+    }
+
+    function enviarMarcacion(respuestaTestigo, observacion = '') {
+      if (!datosPendientes) return;
+      const { ficha, modulo, numDoc, nombreCompleto, estado, numClase, btn, testigo, motivo, tiempoRespuesta } = datosPendientes;
+
+      btn.classList.add('opacity-50', 'pointer-events-none');
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        body: JSON.stringify({
+          accion: 'marcarAsistencia',
+          ficha: ficha,
+          modulo: modulo,
+          numeroClase: numClase,
+          numDoc: numDoc,
+          nombreCompleto: nombreCompleto,
+          estado: estado,
+          testigo: testigo || 'N/A',
+          respuestaTestigo: respuestaTestigo,
+          motivo: motivo || observacion,
+          tiempoRegistro: tiempoRespuesta || 'N/A'
+        })
+      })
+      .then(() => {
+        btn.innerText = "✓ OK";
+        datosPendientes = null;
+        obtenerFichasServidor();
+      });
+    }
+
+    function cerrarModal(idModal) {
+      document.getElementById(idModal).classList.add('hidden');
+    }
+
+    function limpiarFormularioFicha() {
+      document.getElementById('numFicha').value = "";
+      document.getElementById('progFicha').value = "";
+      document.getElementById('jornadaFicha').value = "Mañana";
+      document.getElementById('modFicha').value = "";
+      document.getElementById('pautaExcel').value = "";
+      document.getElementById('numFicha').disabled = false;
+      document.getElementById('modFicha').disabled = false;
+      document.getElementById('tituloFormFicha').innerHTML = `<i class="fa-solid fa-folder-plus text-emerald-600 mr-2"></i>Crear Ficha / Módulo`;
+    }
+
+    function procesarYGuardarFicha() {
+      const numFicha = document.getElementById('numFicha').value.trim();
+      const programa = document.getElementById('progFicha').value.trim();
+      const jornada = document.getElementById('jornadaFicha').value;
+      const modulo = document.getElementById('modFicha').value.trim() || 'General';
+      const textoExcel = document.getElementById('pautaExcel').value.trim();
+
+      if (!numFicha || !modulo || !textoExcel) return alert("Ingresa número de ficha, módulo y lista de aprendices.");
+
+      const filas = textoExcel.split('\n');
+      const aprendices = [];
+
+      filas.forEach(row => {
+        const cols = row.split('\t');
+        if (cols.length >= 2) {
+          aprendices.push({
+            tipoDoc: cols[0]?.trim() || 'CC',
+            numDoc: cols[1]?.trim() || '',
+            nombre: cols[2]?.trim() || '',
+            apellidos: cols[3]?.trim() || '',
+            celular: cols[4]?.trim() || '',
+            correo: cols[5]?.trim() || '',
+            estado: cols[6]?.trim() || 'INDUCCION'
+          });
+        }
+      });
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        body: JSON.stringify({
+          accion: 'guardarFicha',
+          numeroFicha: numFicha,
+          nombrePrograma: programa,
+          jornada: jornada,
+          modulo: modulo,
+          aprendices: aprendices,
+          esEdicion: false
+        })
+      })
+      .then(() => {
+        alert("¡Ficha y Módulo guardados exitosamente!");
+        limpiarFormularioFicha();
+        obtenerFichasServidor();
+        cambiarTab('asistencia');
+      });
+    }
+
+    function filtrarLista() {
+      const texto = document.getElementById('buscadorAprendiz').value.toLowerCase();
+      const items = document.querySelectorAll('.item-aprendiz');
+      items.forEach(item => {
+        const nombre = item.getAttribute('data-nombre');
+        const doc = item.getAttribute('data-doc');
+        if (nombre.includes(texto) || doc.includes(texto)) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    }
+
+    function lanzarPreguntaAleatoria() {
+      const numFicha = document.getElementById('selectFichaActiva').value;
+      const modulo = document.getElementById('selectModuloActivo').value;
+      if (!numFicha || !modulo || !fichasGuardadas[numFicha] || !fichasGuardadas[numFicha].modulos[modulo]) {
+        return alert("Selecciona primero una Ficha y Módulo.");
+      }
+      const lista = fichasGuardadas[numFicha].modulos[modulo];
+      const index = Math.floor(Math.random() * lista.length);
+      document.getElementById('nombrePreguntado').innerText = `${lista[index].nombre} ${lista[index].apellidos}`;
+    }
+  </script>
+</body>
+</html>
